@@ -230,27 +230,18 @@ class YOLOv5Loss(YOLOv3Loss):
                                          iou_loss=None,
                                          iou_aware_loss=None)
 
-    def generate_xywh(self, p, t, scale=1.):
-        x, y = p[:, :, :, :, 0:1], p[:, :, :, :, 1:2]
-        w, h = p[:, :, :, :, 2:3], p[:, :, :, :, 3:4]
-        x = 2 * F.sigmoid(x) - 0.5
-        y = 2 * F.sigmoid(y) - 0.5
-        w = (F.sigmoid(w) * 2) ** 2
-        h = (F.sigmoid(h) * 2) ** 2
-        return x, y, w, h
-
-    def yolov3_loss(self, p, t, gt_box, anchor, downsample, scale=1., eps=1e-10):
+    def yolov3_loss(self, p, t, gt_box, anchor, downsample, scale=1.,
+                    eps=1e-10):
         na = len(anchor)
         b, c, h, w = p.shape
         if self.iou_aware_loss:
             ioup, p = p[:, 0:na, :, :], p[:, na:, :, :]
-            ioup = ioup.unsqueeze(dim=-1)   # ------------------
+            ioup = ioup.unsqueeze(-1)
         p = p.reshape((b, na, -1, h, w)).transpose((0, 1, 3, 4, 2))
-
-        x, y, w, h = self.generate_xywh(p, t, scale)
-
+        x, y = p[:, :, :, :, 0:1], p[:, :, :, :, 1:2]
+        w, h = p[:, :, :, :, 2:3], p[:, :, :, :, 3:4]
         obj, pcls = p[:, :, :, :, 4:5], p[:, :, :, :, 5:]
-        self.distill_pairs.append([x, y, w, h, obj, pcls])    # ----------用来做蒸馏
+        self.distill_pairs.append([x, y, w, h, obj, pcls])
 
         t = t.transpose((0, 1, 3, 4, 2))
         tx, ty = t[:, :, :, :, 0:1], t[:, :, :, :, 1:2]
@@ -261,30 +252,37 @@ class YOLOv5Loss(YOLOv3Loss):
         tscale_obj = tscale * tobj
         loss = dict()
 
+        x = scale * F.sigmoid(x) - 0.5 * (scale - 1.)
+        y = scale * F.sigmoid(y) - 0.5 * (scale - 1.)
+
+        if abs(scale - 1.) < eps:
+            loss_x = F.binary_cross_entropy(x, tx, reduction='none')
+            loss_y = F.binary_cross_entropy(y, ty, reduction='none')
+            loss_xy = tscale_obj * (loss_x + loss_y)
+        else:
+            loss_x = paddle.abs(x - tx)
+            loss_y = paddle.abs(y - ty)
+            loss_xy = tscale_obj * (loss_x + loss_y)
+
         if self.iou_loss is not None:
-            w, h = paddle.log(w), paddle.log(h)
+            
             # warn: do not modify x, y, w, h in place
             box, tbox = [x, y, w, h], [tx, ty, tw, th]
             pbox = bbox_transform(box, anchor, downsample)
             gbox = bbox_transform(tbox, anchor, downsample)
             loss_iou = self.iou_loss(pbox, gbox)
             loss_iou = loss_iou * tscale_obj
-            loss_iou = loss_iou.sum((1, 2, 3, 4)).mean()
+            loss_iou = loss_iou.sum([1, 2, 3, 4]).mean()
             loss['loss_iou'] = loss_iou
+        
         else:
-            loss_x = paddle.abs(x - tx)
-            loss_y = paddle.abs(y - ty)
-            loss_xy = tscale_obj * (loss_x + loss_y)
 
-            # ------------------------
-            loss_xy = loss_xy.sum((1, 2, 3, 4)).mean()
+            loss_xy = loss_xy.sum([1, 2, 3, 4]).mean()
 
-            loss_w = paddle.abs(w - paddle.exp(tw))
-            loss_h = paddle.abs(h - paddle.exp(th))
+            loss_w = paddle.abs(w - tw)
+            loss_h = paddle.abs(h - th)
             loss_wh = tscale_obj * (loss_w + loss_h)
-            loss_wh = loss_wh.sum((1, 2, 3, 4)).mean()
-
-            w, h = paddle.log(w), paddle.log(h)
+            loss_wh = loss_wh.sum([1, 2, 3, 4]).mean()
 
             loss['loss_xy'] = loss_xy
             loss['loss_wh'] = loss_wh
@@ -295,7 +293,7 @@ class YOLOv5Loss(YOLOv3Loss):
             gbox = bbox_transform(tbox, anchor, downsample)
             loss_iou_aware = self.iou_aware_loss(ioup, pbox, gbox)
             loss_iou_aware = loss_iou_aware * tobj
-            loss_iou_aware = loss_iou_aware.sum((1, 2, 3, 4)).mean()
+            loss_iou_aware = loss_iou_aware.sum([1, 2, 3, 4]).mean()
             loss['loss_iou_aware'] = loss_iou_aware
 
         box = [x, y, w, h]
@@ -303,6 +301,6 @@ class YOLOv5Loss(YOLOv3Loss):
         loss_obj = loss_obj.sum(-1).mean()
         loss['loss_obj'] = loss_obj
         loss_cls = self.cls_loss(pcls, tcls) * tobj
-        loss_cls = loss_cls.sum((1, 2, 3, 4)).mean()
+        loss_cls = loss_cls.sum([1, 2, 3, 4]).mean()
         loss['loss_cls'] = loss_cls
         return loss
