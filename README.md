@@ -28,9 +28,9 @@ python tools/train.py -c configs/yolov5/yolov5s_CSPdarknet_roadsign.yml
 
 0.9087 mAP on roadsign dataset.
 
-![01](https://github.com/Sharpiless/PaddleDetection-Yolov5/images/road124.png)
+![01](https://github.com/Sharpiless/PaddleDetection-Yolov5/blob/main/images/road124.png)
 
-![01](https://github.com/Sharpiless/PaddleDetection-Yolov5/images/road119.png)
+![01](https://github.com/Sharpiless/PaddleDetection-Yolov5/blob/main/images/road119.png)
 
 # 关注我的公众号：
 
