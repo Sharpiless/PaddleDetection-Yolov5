@@ -14,6 +14,10 @@ PaddleDetection模块化地实现了多种主流目标检测算法，提供了�
 
 YOLOV4出现之后不久，YOLOv5横空出世。YOLOv5在YOLOv4算法的基础上做了进一步的改进，检测性能得到进一步的提升。虽然YOLOv5算法并没有与YOLOv4算法进行性能比较与分析，但是YOLOv5在COCO数据集上面的测试效果还是挺不错的。大家对YOLOv5算法的创新性半信半疑，有的人对其持肯定态度，有的人对其持否定态度。在我看来，YOLOv5检测算法中还是存在很多可以学习的地方，虽然这些改进思路看来比较简单或者创新点不足，但是它们确定可以提升检测算法的性能。其实工业界往往更喜欢使用这些方法，而不是利用一个超级复杂的算法来获得较高的检测精度。本文将对YOLOv5检测算法进行复现。
 
+# 下载预训练模型：
+
+[https://drive.google.com/file/d/16tREOOJzKgOLw31bSiUNz0iBdqoRzq1i/view?usp=sharing](https://drive.google.com/file/d/16tREOOJzKgOLw31bSiUNz0iBdqoRzq1i/view?usp=sharing)
+
 # 训练Yolov5：
 
 ```bash
