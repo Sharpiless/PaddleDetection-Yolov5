@@ -224,10 +224,13 @@ class Focus(nn.Layer):
 
     def forward(self, x):  # x(b,c,w,h) -> y(b,4c,w/2,h/2)
         # print(x.shape) # [8, 3, 480, 480]
-        y = paddle.concat([x[:, :, ::2, ::2], x[:, :, 1::2, ::2], x[:, :, ::2, 1::2], x[:, :, 1::2, 1::2]], 1)
+        _, _, w, h = x.shape
+        y1 = paddle.strided_slice(x, [2, 3], [0, 0], [h, w], [2, 2])
+        y2 = paddle.strided_slice(x, [2, 3], [0, 0], [h, w], [2, 2])
+        y3 = paddle.strided_slice(x, [2, 3], [0, 0], [h, w], [2, 2])
+        y4 = paddle.strided_slice(x, [2, 3], [0, 0], [h, w], [2, 2])
+        y = paddle.concat([y1, y2, y3, y4], 1)
         return self.conv(y)
-        # return self.conv(self.contract(x))
-
 
 class Contract(nn.Layer):
     # Contract width-height into channels, i.e. x(1,64,80,80) to x(1,256,40,40)
