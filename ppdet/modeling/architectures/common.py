@@ -226,9 +226,9 @@ class Focus(nn.Layer):
         # print(x.shape) # [8, 3, 480, 480]
         _, _, w, h = x.shape
         y1 = paddle.strided_slice(x, [2, 3], [0, 0], [h, w], [2, 2])
-        y2 = paddle.strided_slice(x, [2, 3], [0, 0], [h, w], [2, 2])
-        y3 = paddle.strided_slice(x, [2, 3], [0, 0], [h, w], [2, 2])
-        y4 = paddle.strided_slice(x, [2, 3], [0, 0], [h, w], [2, 2])
+        y2 = paddle.strided_slice(x, [2, 3], [0, 1], [h, w], [2, 2])
+        y3 = paddle.strided_slice(x, [2, 3], [1, 0], [h, w], [2, 2])
+        y4 = paddle.strided_slice(x, [2, 3], [1, 1], [h, w], [2, 2])
         y = paddle.concat([y1, y2, y3, y4], 1)
         return self.conv(y)
 
