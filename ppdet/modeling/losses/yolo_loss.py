@@ -222,13 +222,13 @@ class YOLOv5Loss(YOLOv3Loss):
                  iou_loss=None,
                  iou_aware_loss=None):
 
-        super(YOLOv5Loss, self).__init__(num_classes=80,
-                                         ignore_thresh=0.7,
-                                         label_smooth=False,
-                                         downsample=[32, 16, 8],
-                                         scale_x_y=1.,
-                                         iou_loss=None,
-                                         iou_aware_loss=None)
+        super(YOLOv5Loss, self).__init__(num_classes=num_classes,
+                                         ignore_thresh=ignore_thresh,
+                                         label_smooth=label_smooth,
+                                         downsample=downsample,
+                                         scale_x_y=scale_x_y,
+                                         iou_loss=iou_loss,
+                                         iou_aware_loss=iou_aware_loss)
 
     def yolov3_loss(self, p, t, gt_box, anchor, downsample, scale=1.,
                     eps=1e-10):
